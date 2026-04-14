@@ -1,63 +1,103 @@
-# Fellow Drink
+# Fellow Drink 🥤
 
-Application mobile de gestion de vente de boissons - Plateforme complète pour gérer des produits, des ventes et des livraisons.
+**Application mobile de gestion de vente de boissons naturelles** — Plateforme complète pour gérer des produits, des ventes, des livraisons et des statistiques en temps réel.
 
 ## 📱 À propos
 
 **Fellow Drink** est une application Flutter cross-platform permettant de :
-- 📊 Gérer l'inventaire des produits (boissons)
+- 📊 Gérer l'inventaire des produits (boissons naturelles)
 - 💰 Suivre les ventes et le chiffre d'affaires
-- 📈 Consulter des statistiques détaillées
+- 📈 Consulter des statistiques détaillées et graphiques
 - 🚚 Gérer les livraisons et services
-- 💬 Communiquer via chat intégré
+- 💬 Communiquer avec les clients via chat intégré
 - 🔔 Recevoir des notifications en temps réel
 - 📄 Générer et imprimer des rapports PDF
-- 🔐 Authentification sécurisée
+- 🔐 Authentification sécurisée avec rôles (admin, client, livreur)
 
-## 🛠️ Architecture & Stack Technique
+## 🛠️ Stack Technique
 
 ### Frontend
 - **Framework** : Flutter 3.1+
-- **State Management** : Riverpod
-- **Navigation** : Go Router
+- **Language** : Dart 3.1+
+- **State Management** : Riverpod 2.4+
+- **Navigation** : Go Router 13.2+
 - **Design** : Material Design 3
-- **Icônes** : Font Awesome, SVG
+- **UI**:
+  - Google Fonts (Poppins)
+  - Font Awesome Icons
+  - SVG Support
+  - Shimmer Effects
 
 ### Backend & Services
 - **Database** : Supabase (PostgreSQL)
+- **Auth** : Supabase Auth (Email/Password)
 - **Notifications** : Flutter Local Notifications
-- **Stockage** : Preferences locales
-- **Connectivité** : Connectivity Plus
+- **Storage** : SharedPreferences (local caching)
+- **Connectivity** : Connectivity Plus
 
-### Modules & Librairies
-- `fl_chart` - Graphiques et statistiques
-- `pdf` / `printing` - Génération de rapports
-- `cached_network_image` - Images optimisées
-- `image_picker` - Sélection d'images
-- `intl` - Internationalisation
+### Modules & Librairies Clés
+- `fl_chart` - Graphiques et statistiques (bar charts, line charts)
+- `pdf` / `printing` - Génération & impression de rapports
+- `cached_network_image` - Images optimisées & cachées
+- `image_picker` - Sélection d'images depuis galerie/caméra
+- `intl` - Internationalisation et formatage de dates
+- `equatable` - Comparaison d'objets
+- `dartz` - Programmation fonctionnelle (Either, Option)
 
-## 📁 Structure du Projet
+## 📁 Architecture du Projet
 
 ```
 lib/
-├── features/              # Modules métier
-│   ├── auth/             # Authentification
-│   ├── home/             # Écran d'accueil
-│   ├── landing/          # Landing page
-│   ├── products/         # Gestion des produits
-│   ├── sales/            # Gestion des ventes
-│   ├── statistics/       # Statistiques & analytics
-│   ├── deliveries/       # Gestion des livraisons
-│   ├── chat/             # Chat intégré
-│   └── about/            # À propos
-├── core/                 # Configuration centrale
-│   ├── constants/        # Constantes de l'app
-│   ├── router/           # Configuration routing
-│   └── theme/            # Thème & styles
-└── shared/               # Réutilisables
-    ├── providers/        # Providers Riverpod partagés
-    └── widgets/          # Composants réutilisables
+├── core/
+│   ├── constants/      # Constantes globales (URL Supabase, clés, etc.)
+│   ├── router/         # Configuration Go Router
+│   ├── theme/          # Thème Material & AppColors
+│   └── widgets/        # Widgets réutilisables
+│
+├── features/           # Modules métier (feature-driven architecture)
+│   ├── auth/
+│   │   ├── data/       # Models, repositories
+│   │   └── presentation/
+│   │
+│   ├── landing/        # Landing page publique
+│   ├── home/           # Accueil
+│   ├── products/       # Gestion des produits
+│   ├── sales/          # Gestion des ventes
+│   ├── statistics/     # Statistiques & Analytics
+│   ├── deliveries/     # Gestion des livraisons
+│   ├── chat/           # Messaging
+│   └── about/          # À propos
+│
+├── main.dart           # Point d'entrée
+├── app.dart            # Config app & routing
+└── shared/             # Code partagé
 ```
+
+## 🔄 État du Développement
+
+### ✅ Complété
+| Feature | État | Notes |
+|---------|------|-------|
+| **Authentication** | Complété | Login/Register avec Supabase |
+| **Landing Page** | Complété | Hero banner, features showcase, socials |
+| **Navigation** | Complété | Go Router avec routes protégées |
+| **Theme & Design** | Complété | Material Design 3, Material Colors |
+| **Project Setup** | Complété | Riverpod, Supabase init, notifications |
+
+### 🟡 En Développement
+| Feature | État | Notes |
+|---------|------|-------|
+| **Home Page** | Étape 6 | Placeholder UI de base avec bottom nav |
+| **Products** | Stub | Pages créées, logique à implémenter |
+| **Sales** | Stub | Gestion des ventes, receipt page |
+| **Statistics** | Stub | Dashboard avec graphiques FL Chart |
+| **Deliveries** | Stub | Tracking & gestion livraisons |
+| **Chat** | Stub | Real-time messaging |
+
+### 🔳 Non Commencé
+| Feature | Détails |
+|---------|---------|
+| **About Page** | Standalone page |
 
 ## 🚀 Installation & Démarrage
 
@@ -66,51 +106,103 @@ lib/
 - Dart 3.1.0+
 - Xcode (pour iOS)
 - Android Studio (pour Android)
+- Visual Studio Code ou Android Studio
 
 ### Étapes d'installation
 
-1. Cloner le repository
+1. **Cloner le repository**
 ```bash
-git clone <repository-url>
-cd fellow_drink
+git clone https://github.com/hervevictor/fellow_drinks.git
+cd fellow_drinks
 ```
 
-2. Installer les dépendances
+2. **Installer les dépendances**
 ```bash
 flutter pub get
 ```
 
-3. Générer le code (Riverpod, JSON serialization)
+3. **Générer le code (Riverpod, JSON serialization)**
 ```bash
 flutter pub run build_runner build
 ```
 
-4. Lancer l'app
+4. **Configurer les variables d'environnement**
+   - Ajouter les clés Supabase dans `lib/core/constants/app_constants.dart`
+
+5. **Lancer l'application**
 ```bash
 flutter run
 ```
 
-## 📦 Dépendances Clés
+## 📦 Dépendances Complètes
 
-| Dépendance | Version | Usage |
-|-----------|---------|-------|
-| supabase_flutter | ^2.3.0 | Backend & API |
-| flutter_riverpod | ^2.4.9 | State management |
-| go_router | ^13.2.0 | Navigation |
-| fl_chart | ^0.67.0 | Graphiques |
-| google_fonts | ^6.2.1 | Typographie |
-| pdf/printing | ^3.10.8 / ^5.12.0 | Rapports |
-| flutter_local_notifications | ^17.0.0 | Notifications |
+**Principales** : supabase_flutter, flutter_riverpod, go_router, fl_chart, google_fonts, pdf, printing, flutter_local_notifications
 
-## 🔧 Configuration
+Voir [pubspec.yaml](pubspec.yaml) pour la liste complète avec versions.
 
-Les constantes de l'app (URLs Supabase, API keys) sont définies dans :
-- `lib/core/constants/app_constants.dart`
+## 🏗️ Architecture & Patterns
 
-## 📖 Documentation
+### Feature-Driven Architecture
+Chaque feature suit la structure :
+```
+feature/
+├── data/        # Models, repositories, API calls
+├── domain/      # Entities, use cases
+└── presentation/# Pages, widgets, providers
+```
 
-Pour plus d'informations sur Flutter, consultez [la documentation officielle](https://docs.flutter.dev/).
+### State Management: Riverpod
+- **StateNotifierProvider** pour états mutables
+- **FutureProvider** pour appels async
+- **Provider** pour computations pures
+
+### Routing: Go Router
+- Configuration centralisée dans `core/router/app_router.dart`
+- Guards d'authentification basées sur session Supabase
+
+## 🔧 Configuration & Constantes
+
+Les constantes sont centralisées dans :
+- **`lib/core/constants/app_constants.dart`**
+  - `supabaseUrl` - URL Supabase
+  - `supabaseAnonKey` - Clé anonyme
+  - URLs sociales
+
+Les thèmes sont dans :
+- **`lib/core/theme/app_theme.dart`**
+  - `AppColors` avec palette Material Design
+
+## 📖 Commandes Utiles
+
+```bash
+# Générer code
+flutter pub run build_runner build
+
+# Nettoyer et régénérer
+flutter clean && flutter pub get && flutter pub run build_runner build
+
+# Vérifier la syntaxe
+flutter analyze
+
+# Build Android
+flutter build apk --release
+
+# Build iOS
+flutter build ios --release
+```
+
+## 🤝 Contribution
+
+Fork → Feature branch → Commit → Push → Pull Request
+
+## 🐛 Issues & Support
+
+Ouvrir une [issue GitHub](https://github.com/hervevictor/fellow_drinks/issues) pour signaler un bug ou proposer une amélioration.
 
 ## 📄 Licence
 
 Tous droits réservés © 2026 Fellow Drink
+
+---
+
+**Dernière mise à jour** : 14 avril 2026
