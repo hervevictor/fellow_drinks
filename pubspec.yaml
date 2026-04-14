@@ -1,0 +1,52 @@
+name: fellow_drink
+description: Application de gestion de vente de boissons - Fellow Drink
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.1.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  supabase_flutter: ^2.3.0
+  google_fonts: ^6.2.1
+  flutter_riverpod: ^2.4.9
+  riverpod_annotation: ^2.3.3
+  go_router: ^13.2.0
+  flutter_svg: ^2.0.9
+  cached_network_image: ^3.3.1
+  shimmer: ^3.0.0
+  fl_chart: ^0.67.0
+  intl: ^0.19.0
+  flutter_local_notifications: ^17.0.0
+  pdf: ^3.10.8
+  printing: ^5.12.0
+  uuid: ^4.3.3
+  shared_preferences: ^2.2.2
+  connectivity_plus: ^6.0.2
+  image_picker: ^1.0.7
+  url_launcher: ^6.2.5
+  share_plus: ^7.2.2
+  equatable: ^2.0.5
+  dartz: ^0.10.1
+  font_awesome_flutter: ^10.7.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  build_runner: ^2.4.8
+  riverpod_generator: ^2.3.9
+  json_serializable: ^6.7.1
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+    - assets/icons/
+    - assets/sounds/
+    - assets/logo/
+
+
