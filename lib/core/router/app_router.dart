@@ -7,27 +7,35 @@ import '../../features/landing/presentation/pages/landing_page.dart';
 import '../../features/home/presentation/pages/home_page.dart';
 import '../../features/sales/presentation/pages/sales_page.dart';
 import '../../features/sales/presentation/pages/receipt_page.dart';
+import '../../features/sales/presentation/pages/sales_history_page.dart';
 import '../../features/products/presentation/pages/products_page.dart';
 import '../../features/statistics/presentation/pages/statistics_page.dart';
 import '../../features/deliveries/presentation/pages/deliveries_page.dart';
 import '../../features/chat/presentation/pages/chat_page.dart';
 import '../../features/about/presentation/pages/about_page.dart';
+import '../../features/profile/presentation/pages/profile_page.dart';
+import '../../features/landing/presentation/pages/product_detail_page.dart';
+import '../../features/sales/data/models/sale_model.dart';
+import '../../features/sales/presentation/pages/payment_gateway_page.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/',
     redirect: (context, state) {
-      final session    = Supabase.instance.client.auth.currentSession;
-      final loc        = state.matchedLocation;
-      final authRoutes = {'/login', '/register'};
-      // '/' , '/about' et '/home' sont accessibles sans connexion
-      final publicRoutes = {'/', '/login', '/register', '/about', '/home'};
+      final session      = Supabase.instance.client.auth.currentSession;
+      final loc          = state.matchedLocation;
+      final publicRoutes = {'/', '/login', '/register', '/about'};
 
-      // Connecté → jamais sur la landing ni login/register
-      if (session != null && (loc == '/' || authRoutes.contains(loc))) return '/home';
+      // Connecté sur la landing → accueil
+      if (session != null && loc == '/') return '/home';
 
-      // Pas connecté → jamais sur les pages protégées (sauf celles listées)
-      if (session == null && !publicRoutes.contains(loc)) return '/';
+      // Pas connecté → pages protégées → landing
+      // /product/:id est public (commence par /product/)
+      if (session == null &&
+          !publicRoutes.contains(loc) &&
+          !loc.startsWith('/product')) {
+        return '/';
+      }
 
       return null;
     },
@@ -45,10 +53,23 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/register',
         builder: (_, __) => const RegisterPage(),
       ),
-      // /about hors ShellRoute → pas de nav bar, accessible sans session
       GoRoute(
         path: '/about',
         builder: (_, __) => const AboutPage(),
+      ),
+      // Détail produit — public, pas de nav bar
+      GoRoute(
+        path: '/product/:id',
+        builder: (_, state) => ProductDetailPage(
+          productId: state.pathParameters['id']!,
+        ),
+      ),
+      // Passerelle de paiement — plein écran, sans nav bar
+      GoRoute(
+        path: '/payment',
+        builder: (_, state) => PaymentGatewayPage(
+          sale: state.extra as SaleModel,
+        ),
       ),
 
       // ── Pages avec nav bar (ShellRoute) ─────────────────────────────
@@ -70,6 +91,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             ),
           ),
           GoRoute(
+            path: '/sales/history',
+            builder: (_, __) => const SalesHistoryPage(),
+          ),
+          GoRoute(
             path: '/products',
             builder: (_, __) => const ProductsPage(),
           ),
@@ -84,6 +109,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/chat',
             builder: (_, __) => const ChatPage(),
+          ),
+          GoRoute(
+            path: '/profile',
+            builder: (_, __) => const ProfilePage(),
           ),
         ],
       ),

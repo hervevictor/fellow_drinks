@@ -32,6 +32,9 @@ dependencies:
   equatable: ^2.0.5
   dartz: ^0.10.1
   font_awesome_flutter: ^10.7.0
+  qr_flutter: ^4.1.0
+
+  
 
 dev_dependencies:
   flutter_test:

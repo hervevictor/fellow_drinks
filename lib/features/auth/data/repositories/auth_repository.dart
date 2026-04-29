@@ -12,8 +12,13 @@ class AuthRepository {
       email: email,
       password: password,
     );
-    if (response.user == null) throw Exception('Connexion échouée');
-    return _fetchProfile(response.user!.id);
+    final user = response.user;
+    if (user == null) throw Exception('Connexion échouée');
+
+    // Essayer de charger le profil, créer si absent
+    final profile = await _fetchOrCreateProfile(user);
+    if (profile == null) throw Exception('Profil introuvable');
+    return profile;
   }
 
   Future<UserModel> signUp({
@@ -21,24 +26,26 @@ class AuthRepository {
     required String password,
     required String name,
     String role = 'client',
-    String? phone,           // ← ajouté
+    String? phone,
   }) async {
     final response = await _client.auth.signUp(
       email: email,
       password: password,
     );
-    if (response.user == null) throw Exception('Inscription échouée');
+    final user = response.user;
+    if (user == null) throw Exception('Inscription échouée');
 
-    await _client.from('profiles').insert({
-      'id':         response.user!.id,
+    // Upsert pour éviter le conflit si le trigger a déjà créé le profil
+    await _client.from('profiles').upsert({
+      'id':         user.id,
       'email':      email,
       'name':       name,
       'role':       role,
-      'phone':      phone,   // ← ajouté
+      'phone':      phone,
       'created_at': DateTime.now().toIso8601String(),
     });
 
-    return _fetchProfile(response.user!.id);
+    return await _fetchProfile(user.id);
   }
 
   Future<void> signOut() => _client.auth.signOut();
@@ -47,7 +54,35 @@ class AuthRepository {
     final user = _client.auth.currentUser;
     if (user == null) return null;
     try {
-      return await _fetchProfile(user.id);
+      return await _fetchProfile(user.id)
+          .timeout(const Duration(seconds: 8));
+    } on Exception {
+      return await _fetchOrCreateProfile(user);
+    }
+  }
+
+  // ── Helpers ──────────────────────────────────────────────────────────────────
+
+  /// Tente de lire le profil ; si absent, le crée depuis les metadata auth.
+  Future<UserModel?> _fetchOrCreateProfile(User user) async {
+    try {
+      return await _fetchProfile(user.id)
+          .timeout(const Duration(seconds: 8));
+    } catch (_) {}
+
+    // Profil absent ou timeout → upsert minimal
+    try {
+      final metadata = user.userMetadata ?? {};
+      await _client.from('profiles').upsert({
+        'id':         user.id,
+        'email':      user.email ?? '',
+        'name':       metadata['name']      as String? ??
+                      metadata['full_name'] as String?,
+        'role':       'client',
+        'created_at': DateTime.now().toIso8601String(),
+      });
+      return await _fetchProfile(user.id)
+          .timeout(const Duration(seconds: 5));
     } catch (_) {
       return null;
     }

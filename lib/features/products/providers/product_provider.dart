@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/models/product_model.dart';
 import '../data/models/category_model.dart';
 import '../data/repositories/product_repository.dart';
+import '../../landing/providers/public_products_provider.dart';
 
 final productRepositoryProvider = Provider<ProductRepository>(
   (_) => ProductRepository(),
@@ -63,6 +64,11 @@ class ProductNotifier extends StateNotifier<AsyncValue<void>> {
   ProductNotifier(this._repo, this._ref)
       : super(const AsyncValue.data(null));
 
+  void _invalidateAll() {
+    _ref.invalidate(productsProvider);
+    _ref.invalidate(publicProductsProvider);
+  }
+
   Future<void> createProduct({
     required String name,
     String? categoryId,
@@ -81,7 +87,7 @@ class ProductNotifier extends StateNotifier<AsyncValue<void>> {
         imageUrl:      imageUrl,
         description:   description,
       );
-      _ref.invalidate(productsProvider);
+      _invalidateAll();
       state = const AsyncValue.data(null);
     } catch (e, s) {
       state = AsyncValue.error(e, s);
@@ -95,7 +101,7 @@ class ProductNotifier extends StateNotifier<AsyncValue<void>> {
     state = const AsyncValue.loading();
     try {
       await _repo.updateProduct(id: id, updates: updates);
-      _ref.invalidate(productsProvider);
+      _invalidateAll();
       state = const AsyncValue.data(null);
     } catch (e, s) {
       state = AsyncValue.error(e, s);
@@ -106,7 +112,7 @@ class ProductNotifier extends StateNotifier<AsyncValue<void>> {
     state = const AsyncValue.loading();
     try {
       await _repo.deleteProduct(id);
-      _ref.invalidate(productsProvider);
+      _invalidateAll();
       state = const AsyncValue.data(null);
     } catch (e, s) {
       state = AsyncValue.error(e, s);

@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../auth/providers/auth_provider.dart';
 import '../../providers/product_provider.dart';
-import '../../data/models/product_model.dart';
-import '../../data/models/category_model.dart';
 import '../widgets/product_card.dart';
 import '../widgets/add_product_dialog.dart';
 
@@ -13,6 +12,7 @@ class ProductsPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isAdmin          = ref.watch(isAdminProvider);
     final categoriesAsync  = ref.watch(categoriesProvider);
     final selectedCategory = ref.watch(selectedCategoryProvider);
     final productsAsync    = ref.watch(filteredProductsProvider);
@@ -23,15 +23,17 @@ class ProductsPage extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Produits'),
+        title: Text(isAdmin ? 'Produits' : 'Catalogue'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () => showDialog(
-              context: context,
-              builder: (_) => const AddProductDialog(),
+          if (isAdmin)
+            IconButton(
+              icon: const Icon(Icons.add),
+              tooltip: 'Ajouter un produit',
+              onPressed: () => showDialog(
+                context: context,
+                builder: (_) => const AddProductDialog(),
+              ),
             ),
-          ),
         ],
       ),
       body: Column(

@@ -1,0 +1,147 @@
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../models/sale_model.dart';
+
+class SaleRepository {
+  final _client = Supabase.instance.client;
+
+  // ── Générer numéro de reçu unique ────────────────────────────────────────
+
+  Future<String> _generateReceiptNumber() async {
+    final now    = DateTime.now();
+    final prefix = 'FD-${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}';
+    final count  = await _client
+        .from('sales')
+        .select('id')
+        .gte('created_at', DateTime(now.year, now.month, now.day).toIso8601String());
+    final num    = ((count as List).length + 1).toString().padLeft(3, '0');
+    return '$prefix-$num';
+  }
+
+  // ── Créer une vente avec ses lignes ──────────────────────────────────────
+
+  Future<SaleModel> createSale({
+    required List<CartItem> items,
+    String? clientName,
+    String? clientPhone,
+  }) async {
+    final userId  = _client.auth.currentUser?.id;
+    final receipt = await _generateReceiptNumber();
+    final total   = items.fold<double>(0, (s, i) => s + i.subtotal);
+
+    // 1. Insérer la vente
+    final saleData = await _client.from('sales').insert({
+      'receipt_number': receipt,
+      'client_name':    clientName,
+      'client_phone':   clientPhone,
+      'total_amount':   total,
+      'status':         'completed',
+      'created_by':     userId,
+      'created_at':     DateTime.now().toIso8601String(),
+    }).select().single();
+
+    final saleId = saleData['id'] as String;
+
+    // 2. Insérer les lignes
+    final lines = items.map((item) => {
+      'sale_id':    saleId,
+      'product_id': item.product.id,
+      'quantity':   item.quantity,
+      'unit_price': item.product.price,
+      'subtotal':   item.subtotal,
+    }).toList();
+
+    await _client.from('sale_items').insert(lines);
+
+    // 3. Mettre à jour les stocks
+    for (final item in items) {
+      final newQty = item.product.stockQuantity - item.quantity;
+      await _client.from('products').update({
+        'stock_quantity': newQty < 0 ? 0 : newQty,
+        'updated_at':     DateTime.now().toIso8601String(),
+      }).eq('id', item.product.id);
+    }
+
+    // 4. Historique
+    await _client.from('sale_history').insert({
+      'sale_id':    saleId,
+      'action':     'created',
+      'changed_by': userId,
+      'changes':    {'receipt_number': receipt, 'total': total},
+    });
+
+    return getSaleById(saleId);
+  }
+
+  // ── Récupérer une vente par ID avec ses lignes ───────────────────────────
+
+  Future<SaleModel> getSaleById(String id) async {
+    final data = await _client
+        .from('sales')
+        .select('*, sale_items(*, products(*, categories(*)))')
+        .eq('id', id)
+        .single();
+    return SaleModel.fromMap(data);
+  }
+
+  // ── Liste des ventes (admin) ─────────────────────────────────────────────
+
+  Future<List<SaleModel>> getSales({
+    DateTime? from,
+    DateTime? to,
+    String? status,
+    int limit = 20,
+    int offset = 0,
+  }) async {
+    var query = _client
+        .from('sales')
+        .select('*, sale_items(*, products(*))')
+        .order('created_at', ascending: false)
+        .range(offset, offset + limit - 1);
+
+    if (status != null) query = query.eq('status', status);
+    if (from != null)   query = query.gte('created_at', from.toIso8601String());
+    if (to != null)     query = query.lte('created_at', to.toIso8601String());
+
+    final data = await query;
+    return (data as List).map((e) => SaleModel.fromMap(e)).toList();
+  }
+
+  // ── Ventes du client connecté ────────────────────────────────────────────
+
+  Future<List<SaleModel>> getClientSales({int limit = 20}) async {
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null) return [];
+
+    final data = await _client
+        .from('sales')
+        .select('*, sale_items(*, products(*, categories(*)))')
+        .eq('created_by', userId)
+        .order('created_at', ascending: false)
+        .limit(limit);
+
+    return (data as List).map((e) => SaleModel.fromMap(e)).toList();
+  }
+
+  // ── Annuler une vente (admin) ────────────────────────────────────────────
+
+  Future<void> cancelSale({
+    required String saleId,
+    required String reason,
+  }) async {
+    final userId = _client.auth.currentUser?.id;
+
+    await _client.from('sales').update({
+      'status':           'cancelled',
+      'cancelled_at':     DateTime.now().toIso8601String(),
+      'cancelled_reason': reason,
+    }).eq('id', saleId);
+
+    await _client.from('sale_history').insert({
+      'sale_id':    saleId,
+      'action':     'cancelled',
+      'changed_by': userId,
+      'changes':    {'reason': reason},
+    });
+  }
+}
+

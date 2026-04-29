@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../data/models/user_model.dart';
@@ -43,10 +44,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<void> _init() async {
     state = state.copyWith(status: AuthStatus.loading);
-    final user = await _repo.getCurrentUser();
-    state = user != null
-        ? state.copyWith(status: AuthStatus.authenticated, user: user)
-        : state.copyWith(status: AuthStatus.unauthenticated);
+    try {
+      final user = await _repo.getCurrentUser()
+          .timeout(const Duration(seconds: 15));
+      state = user != null
+          ? state.copyWith(status: AuthStatus.authenticated, user: user)
+          : state.copyWith(status: AuthStatus.unauthenticated);
+    } catch (_) {
+      // Timeout ou erreur réseau — considéré non connecté
+      state = state.copyWith(status: AuthStatus.unauthenticated);
+    }
   }
 
   Future<void> signIn({
@@ -99,6 +106,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = const AuthState(status: AuthStatus.unauthenticated);
   }
 
+  void updateProfile(UserModel updated) {
+    state = state.copyWith(user: updated);
+  }
+
   String _friendlyError(String msg) {
     if (msg.contains('Invalid login')) return 'Email ou mot de passe incorrect';
     if (msg.contains('already registered')) return 'Email déjà utilisé';
@@ -110,6 +121,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>(
   (ref) => AuthNotifier(ref.watch(authRepositoryProvider)),
 );
+
+typedef UserProfile = UserModel;
+
+final currentProfileProvider = FutureProvider<UserProfile?>((ref) async {
+  final authState = ref.watch(authProvider);
+  return authState.user;
+});
 
 final currentUserProvider = Provider<UserModel?>(
   (ref) => ref.watch(authProvider).user,

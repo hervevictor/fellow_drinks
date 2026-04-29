@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:uuid/uuid.dart';
 import '../models/product_model.dart';
 import '../models/category_model.dart';
 
@@ -112,6 +114,25 @@ class ProductRepository {
       'stock_quantity': quantity,
       'updated_at':     DateTime.now().toIso8601String(),
     }).eq('id', productId);
+  }
+
+  // ── Upload image ─────────────────────────────────────────────────────
+
+  /// Upload une image dans le bucket `products` et retourne l'URL publique.
+  Future<String> uploadProductImage(File file) async {
+    final ext      = file.path.split('.').last.toLowerCase();
+    final fileName = '${const Uuid().v4()}.$ext';
+
+    await _client.storage.from('products').upload(
+      fileName,
+      file,
+      fileOptions: FileOptions(
+        contentType: ext == 'png' ? 'image/png' : 'image/jpeg',
+        upsert: false,
+      ),
+    );
+
+    return _client.storage.from('products').getPublicUrl(fileName);
   }
 }
 

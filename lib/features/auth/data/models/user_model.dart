@@ -56,6 +56,15 @@ class UserModel extends Equatable {
       );
 
   bool get isAdmin => role == 'admin';
+  bool get isClient => role == 'client';
+  bool get isLivreur => role == 'livreur';
+
+  String get displayName {
+    final trimmedName = name?.trim();
+    return trimmedName != null && trimmedName.isNotEmpty
+        ? trimmedName
+        : email.split('@').first;
+  }
 
   @override
   List<Object?> get props =>
