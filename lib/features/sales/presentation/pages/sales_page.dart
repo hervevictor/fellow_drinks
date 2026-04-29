@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../auth/providers/auth_provider.dart';
+import '../../../home/providers/home_stats_provider.dart';
 import '../../../products/data/models/product_model.dart';
 import '../../../products/providers/product_provider.dart';
 import '../../data/models/sale_model.dart';
@@ -616,6 +617,9 @@ class _CartSheetState extends ConsumerState<_CartSheet> {
           pendingPayment: true,
         );
     if (sale != null && mounted) {
+      ref.invalidate(clientHistoryProvider);
+      ref.invalidate(clientStatsProvider);
+      ref.invalidate(filteredProductsProvider);
       nav.pop();
       router.push('/payment', extra: sale);
     }

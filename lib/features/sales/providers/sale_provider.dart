@@ -2,8 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/models/sale_model.dart';
 import '../data/repositories/sale_repository.dart';
 import '../../products/data/models/product_model.dart';
-import '../../products/providers/product_provider.dart';
-import '../../home/providers/home_stats_provider.dart';
 
 // ── Repository ─────────────────────────────────────────────────────────────────
 
@@ -103,9 +101,6 @@ class SaleCreationNotifier extends StateNotifier<AsyncValue<void>> {
       );
       _ref.read(cartProvider.notifier).clear();
       _ref.invalidate(salesListProvider);
-      _ref.invalidate(clientHistoryProvider);
-      _ref.invalidate(clientStatsProvider);
-      _ref.invalidate(filteredProductsProvider);
       state = const AsyncValue.data(null);
       return sale;
     } catch (e, s) {

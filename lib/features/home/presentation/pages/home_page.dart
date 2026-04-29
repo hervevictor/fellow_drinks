@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../auth/providers/auth_provider.dart';
+import '../../../chat/providers/chat_provider.dart';
 import '../../providers/home_stats_provider.dart';
 
 // ─── Formatters ──────────────────────────────────────────────────────────────
@@ -39,9 +40,10 @@ class MainShell extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isAdmin  = ref.watch(isAdminProvider);
-    final navItems = isAdmin ? _adminNav : _clientNav;
-    final location = GoRouterState.of(context).uri.toString();
+    final isAdmin    = ref.watch(isAdminProvider);
+    final navItems   = isAdmin ? _adminNav : _clientNav;
+    final unread     = ref.watch(unreadCountProvider).valueOrNull ?? 0;
+    final location   = GoRouterState.of(context).uri.toString();
 
     final currentIndex = () {
       final i = navItems.indexWhere((n) => location.startsWith(n.path));
@@ -56,11 +58,27 @@ class MainShell extends ConsumerWidget {
         type: BottomNavigationBarType.fixed,
         selectedItemColor: AppColors.primary,
         unselectedItemColor: AppColors.textSecondary,
-        items: navItems.map((item) => BottomNavigationBarItem(
-          icon: Icon(item.icon),
-          activeIcon: Icon(item.activeIcon),
-          label: item.label,
-        )).toList(),
+        items: navItems.map((item) {
+          final isChatItem = item.path == '/chat';
+          final showBadge  = isChatItem && unread > 0;
+          return BottomNavigationBarItem(
+            icon: showBadge
+                ? Badge(
+                    label: Text('$unread',
+                        style: const TextStyle(fontSize: 10)),
+                    child: Icon(item.icon),
+                  )
+                : Icon(item.icon),
+            activeIcon: showBadge
+                ? Badge(
+                    label: Text('$unread',
+                        style: const TextStyle(fontSize: 10)),
+                    child: Icon(item.activeIcon),
+                  )
+                : Icon(item.activeIcon),
+            label: item.label,
+          );
+        }).toList(),
       ),
     );
   }
