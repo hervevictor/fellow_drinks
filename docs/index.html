@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fellow Drink — Jus naturels du Togo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary:      #D4750A;
+      --primary-dark: #A85C08;
+      --bg:           #FFF8F3;
+      --surface:      #FFFFFF;
+      --text:         #1A1A1A;
+      --text-sec:     #6B6B6B;
+      --radius:       16px;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: #fff;
+      padding: 80px 24px 100px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      width: 500px; height: 500px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.06);
+      top: -200px; right: -100px;
+    }
+    .hero::after {
+      content: '';
+      position: absolute;
+      width: 300px; height: 300px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.06);
+      bottom: -100px; left: -80px;
+    }
+    .hero-icon {
+      width: 96px; height: 96px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 24px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 24px;
+      font-size: 48px;
+      backdrop-filter: blur(8px);
+    }
+    .hero h1 {
+      font-size: clamp(2rem, 6vw, 3.5rem);
+      font-weight: 800;
+      letter-spacing: -1px;
+      margin-bottom: 12px;
+    }
+    .hero p {
+      font-size: clamp(1rem, 2.5vw, 1.2rem);
+      opacity: 0.88;
+      max-width: 500px;
+      margin: 0 auto 16px;
+      font-weight: 300;
+      line-height: 1.6;
+    }
+    .badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.2);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 999px;
+      padding: 6px 18px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      margin-bottom: 48px;
+      backdrop-filter: blur(4px);
+    }
+
+    /* ── DOWNLOAD CARD ── */
+    .download-card {
+      background: var(--surface);
+      border-radius: 24px;
+      padding: 36px 32px;
+      max-width: 480px;
+      margin: -60px auto 0;
+      position: relative;
+      z-index: 10;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.12);
+    }
+    .download-card h2 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+    .download-card p {
+      font-size: 0.9rem;
+      color: var(--text-sec);
+      margin-bottom: 28px;
+      line-height: 1.5;
+    }
+    .btn-download {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      padding: 16px 32px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      width: 100%;
+      margin-bottom: 12px;
+      transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+      box-shadow: 0 4px 20px rgba(212, 117, 10, 0.35);
+    }
+    .btn-download:hover {
+      background: var(--primary-dark);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(212, 117, 10, 0.4);
+    }
+    .btn-download:active { transform: translateY(0); }
+    .btn-download svg { width: 24px; height: 24px; flex-shrink: 0; }
+
+    .btn-alt {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: transparent;
+      color: var(--primary);
+      border: 2px solid var(--primary);
+      border-radius: var(--radius);
+      padding: 14px 32px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      width: 100%;
+      transition: background 0.2s;
+    }
+    .btn-alt:hover { background: rgba(212,117,10,0.06); }
+
+    .req {
+      margin-top: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.78rem;
+      color: var(--text-sec);
+    }
+    .req-dot { width: 6px; height: 6px; border-radius: 50%; background: #4CAF50; flex-shrink: 0; }
+
+    /* ── FEATURES ── */
+    .section {
+      padding: 72px 24px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .section-title {
+      text-align: center;
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .section-sub {
+      text-align: center;
+      color: var(--text-sec);
+      margin-bottom: 48px;
+      font-size: 0.95rem;
+    }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+    }
+    .feature-card {
+      background: var(--surface);
+      border-radius: 20px;
+      padding: 28px 24px;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.06);
+      transition: transform 0.2s;
+    }
+    .feature-card:hover { transform: translateY(-4px); }
+    .feature-icon {
+      width: 52px; height: 52px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      margin-bottom: 16px;
+    }
+    .feature-card h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .feature-card p {
+      font-size: 0.85rem;
+      color: var(--text-sec);
+      line-height: 1.5;
+    }
+
+    /* ── HOW IT WORKS ── */
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .step {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+      background: var(--surface);
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.05);
+    }
+    .step-num {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      flex-shrink: 0;
+      font-size: 1rem;
+    }
+    .step h3 { font-size: 1rem; font-weight: 600; margin-bottom: 4px; }
+    .step p  { font-size: 0.85rem; color: var(--text-sec); line-height: 1.5; }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--text);
+      color: rgba(255,255,255,0.7);
+      text-align: center;
+      padding: 40px 24px;
+    }
+    footer strong { color: #fff; }
+    footer p { font-size: 0.85rem; line-height: 1.7; }
+    .social-links { display: flex; gap: 16px; justify-content: center; margin-top: 16px; }
+    .social-links a {
+      color: rgba(255,255,255,0.6);
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    .social-links a:hover { color: var(--primary); }
+
+    /* ── DIVIDER ── */
+    .divider { height: 1px; background: rgba(0,0,0,0.06); margin: 0 24px; }
+
+    @media (max-width: 500px) {
+      .download-card { margin: -40px 16px 0; padding: 28px 20px; }
+      .section { padding: 56px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── HERO ── -->
+<section class="hero">
+  <div class="hero-icon">🍹</div>
+  <h1>Fellow Drink</h1>
+  <p>La passion du naturel — Jus frais 100% naturels, sans conservateur, fabriqués au Togo.</p>
+  <div class="badge">🇹🇬 Made in Togo · Certifié Bio</div>
+</section>
+
+<!-- ── DOWNLOAD CARD ── -->
+<div style="padding: 0 16px; position: relative; z-index: 10;">
+  <div class="download-card">
+    <h2>Télécharger l'application</h2>
+    <p>Commandez vos jus préférés, suivez vos livraisons et payez en Mobile Money, carte ou espèces.</p>
+
+    <a class="btn-download"
+       href="https://github.com/hervevictor/fellow_drinks/releases/latest/download/Fellow-Drink-arm64.apk"
+       download>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <path d="M12 15V3M12 15l-4-4M12 15l4-4M2 17v2a2 2 0 002 2h16a2 2 0 002-2v-2"/>
+      </svg>
+      Télécharger (Android ARM64)
+    </a>
+
+    <a class="btn-alt"
+       href="https://github.com/hervevictor/fellow_drinks/releases/latest/download/Fellow-Drink-arm32.apk"
+       download>
+      Anciens téléphones (ARM32)
+    </a>
+
+    <div class="req">
+      <div class="req-dot"></div>
+      Android 5.0+ · 25 MB · Gratuit
+    </div>
+    <div class="req" style="margin-top:8px;">
+      <div class="req-dot"></div>
+      Activer "Sources inconnues" dans les paramètres Android
+    </div>
+  </div>
+</div>
+
+<!-- ── FEATURES ── -->
+<div class="divider" style="margin-top: 60px;"></div>
+<section class="section">
+  <h2 class="section-title">Tout ce dont vous avez besoin</h2>
+  <p class="section-sub">Une expérience complète de commande et de paiement</p>
+
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon" style="background:#FFF3E0;">🛒</div>
+      <h3>Commande facile</h3>
+      <p>Parcourez le catalogue, ajoutez au panier et passez commande en quelques secondes.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon" style="background:#E8F5E9;">📱</div>
+      <h3>Mobile Money</h3>
+      <p>Payez avec Flooz ou T-Money. Entrez votre code de confirmation et recevez votre reçu QR.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon" style="background:#E3F2FD;">💳</div>
+      <h3>Carte bancaire</h3>
+      <p>Paiement sécurisé par carte. Votre reçu est généré instantanément après confirmation.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon" style="background:#F3E5F5;">💬</div>
+      <h3>Chat en temps réel</h3>
+      <p>Contactez le support directement depuis l'app. Réponse rapide garantie.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon" style="background:#FFF8E1;">📦</div>
+      <h3>Suivi de livraison</h3>
+      <p>Suivez l'état de votre commande en temps réel jusqu'à la livraison.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon" style="background:#FCE4EC;">🧾</div>
+      <h3>Historique & Reçus</h3>
+      <p>Toutes vos commandes sauvegardées. Imprimez ou partagez vos reçus en PDF.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ── HOW IT WORKS ── -->
+<div class="divider"></div>
+<section class="section">
+  <h2 class="section-title">Comment ça marche ?</h2>
+  <p class="section-sub">Simple, rapide, efficace</p>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div>
+        <h3>Créez votre compte</h3>
+        <p>Inscrivez-vous avec votre email. L'accès est immédiat et gratuit.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div>
+        <h3>Choisissez vos produits</h3>
+        <p>Parcourez notre catalogue de jus naturels et ajoutez vos favoris au panier.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div>
+        <h3>Payez comme vous voulez</h3>
+        <p>Espèces, Mobile Money (Flooz/T-Money) ou carte bancaire — à vous de choisir.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div>
+        <h3>Recevez votre commande</h3>
+        <p>Récupérez en boutique ou faites-vous livrer. Votre QR code sert de preuve de paiement.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <p><strong>Fellow Drink</strong></p>
+  <p>La Passion du Naturel · Lomé, Togo<br/>
+  📞 +228 90 08 43 74</p>
+  <div class="social-links">
+    <a href="https://facebook.com/fellowdrink">Facebook</a>
+    <a href="https://instagram.com/fellowdrink">Instagram</a>
+    <a href="https://wa.me/22890084374">WhatsApp</a>
+    <a href="https://tiktok.com/@fellowdrink">TikTok</a>
+  </div>
+  <p style="margin-top:20px; font-size:0.75rem; opacity:0.5;">
+    © 2026 Fellow Drink. Tous droits réservés.
+  </p>
+</footer>
+
+</body>
+</html>

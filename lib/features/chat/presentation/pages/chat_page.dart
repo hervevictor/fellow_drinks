@@ -379,9 +379,11 @@ class _ConversationViewState extends ConsumerState<_ConversationView> {
                     ),
                   );
                 }
-                // Marquer comme lu + scroller en bas
-                ChatRepository().markAsRead(widget.otherUserId);
-                _scrollToBottom();
+                // Hors du build : marquer comme lu + scroller
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  ChatRepository().markAsRead(widget.otherUserId);
+                  _scrollToBottom();
+                });
 
                 return ListView.builder(
                   controller: _scrollCtrl,
