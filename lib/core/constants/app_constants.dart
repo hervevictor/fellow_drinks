@@ -39,6 +39,15 @@ class AppConstants {
   static const String roleAdmin  = 'admin';
   static const String roleClient = 'client';
 
+  // ── Emails admin autorisés ─────────────────────────────────────────────────
+  // Ajoute ici tous les emails qui doivent avoir les droits admin.
+  // Lors de la connexion, si l'email est dans cette liste le rôle est
+  // automatiquement forcé à 'admin' (même si le compte a été créé en 'client').
+  static const List<String> adminEmails = [
+    'hdoamekpo@gmail.com',
+    'fellowdrink@gmail.com',  // ← décommente pour ajouter
+  ];
+
   // Sons
   static const String chatSoundPath = 'sounds/chat_notif.mp3';
 }

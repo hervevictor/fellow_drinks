@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../core/constants/app_constants.dart';
 import '../models/message_model.dart';
 
 class ChatRepository {
@@ -7,27 +9,81 @@ class ChatRepository {
   String? get _uid => _client.auth.currentUser?.id;
 
   Future<String?> getAdminId() async {
-    final data = await _client
+    // Cherche d'abord parmi les emails admin définis dans les constantes
+    // (plus fiable que se fier uniquement au champ role en DB)
+    for (final email in AppConstants.adminEmails) {
+      final data = await _client
+          .from('profiles')
+          .select('id')
+          .eq('email', email)
+          .maybeSingle();
+      if (data != null) return data['id'] as String?;
+    }
+    // Fallback : cherche n'importe quel profil avec role='admin'
+    final fallback = await _client
         .from('profiles')
         .select('id')
         .eq('role', 'admin')
         .limit(1)
         .maybeSingle();
-    return data?['id'] as String?;
+    return fallback?['id'] as String?;
   }
 
   Stream<List<MessageModel>> conversationStream(String otherUserId) {
     final uid = _uid;
-    return _client
-        .from('messages')
-        .stream(primaryKey: ['id'])
-        .order('created_at')
-        .map((data) => data
-            .map((e) => MessageModel.fromMap(e))
-            .where((m) =>
-                (m.senderId == uid && m.recipientId == otherUserId) ||
-                (m.senderId == otherUserId && m.recipientId == uid))
-            .toList());
+    if (uid == null) return Stream.value([]);
+
+    bool cancelled = false;
+    RealtimeChannel? channel;
+    late StreamController<List<MessageModel>> controller;
+
+    Future<void> fetchAndEmit() async {
+      if (cancelled) return;
+      try {
+        final List<dynamic> sent = await _client
+            .from('messages')
+            .select()
+            .eq('sender_id', uid)
+            .eq('recipient_id', otherUserId)
+            .order('created_at', ascending: false);
+        final List<dynamic> received = await _client
+            .from('messages')
+            .select()
+            .eq('sender_id', otherUserId)
+            .eq('recipient_id', uid)
+            .order('created_at', ascending: false);
+        if (cancelled) return;
+        final msgs = [
+          ...sent.map((e) => MessageModel.fromMap(e as Map<String, dynamic>)),
+          ...received.map((e) => MessageModel.fromMap(e as Map<String, dynamic>)),
+        ]..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        controller.add(msgs);
+      } catch (e) {
+        if (!cancelled) controller.addError(e);
+      }
+    }
+
+    controller = StreamController<List<MessageModel>>(
+      onCancel: () {
+        cancelled = true;
+        final ch = channel;
+        if (ch != null) _client.removeChannel(ch);
+      },
+    );
+
+    fetchAndEmit();
+
+    channel = _client
+        .channel('conv_${uid}_$otherUserId')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'messages',
+          callback: (_) => fetchAndEmit(),
+        )
+        .subscribe();
+
+    return controller.stream;
   }
 
   Future<void> sendMessage({
@@ -55,12 +111,47 @@ class ChatRepository {
   Stream<int> unreadCountStream() {
     final uid = _uid;
     if (uid == null) return Stream.value(0);
-    return _client
-        .from('messages')
-        .stream(primaryKey: ['id'])
-        .map((data) => data
-            .where((e) => e['recipient_id'] == uid && e['is_read'] == false)
-            .length);
+
+    bool cancelled = false;
+    RealtimeChannel? channel;
+    late StreamController<int> controller;
+
+    Future<void> fetchAndEmit() async {
+      if (cancelled) return;
+      try {
+        final List<dynamic> data = await _client
+            .from('messages')
+            .select('id')
+            .eq('recipient_id', uid)
+            .eq('is_read', false);
+        if (cancelled) return;
+        controller.add(data.length);
+      } catch (_) {
+        if (!cancelled) controller.add(0);
+      }
+    }
+
+    controller = StreamController<int>(
+      onCancel: () {
+        cancelled = true;
+        final ch = channel;
+        if (ch != null) _client.removeChannel(ch);
+      },
+    );
+
+    fetchAndEmit();
+
+    channel = _client
+        .channel('unread_$uid')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'messages',
+          callback: (_) => fetchAndEmit(),
+        )
+        .subscribe();
+
+    return controller.stream;
   }
 
   Stream<List<ConversationItem>> adminConversationsStream() {

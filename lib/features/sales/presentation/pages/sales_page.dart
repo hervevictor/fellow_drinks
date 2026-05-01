@@ -1018,6 +1018,7 @@ class _SaleCard extends StatelessWidget {
         child: Row(
           children: [
             Container(
+              
               width: 44, height: 44,
               decoration: BoxDecoration(
                 color: sale.isCancelled

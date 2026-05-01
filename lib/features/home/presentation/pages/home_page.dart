@@ -22,11 +22,11 @@ class MainShell extends ConsumerWidget {
 
   // ── Nav Admin ────────────────────────────────────────────────────────────────
   static const _adminNav = [
-    _NavItem(icon: Icons.home_outlined,          activeIcon: Icons.home,              label: 'Accueil',   path: '/home'),
-    _NavItem(icon: Icons.inventory_2_outlined,   activeIcon: Icons.inventory_2,       label: 'Produits',  path: '/products'),
-    _NavItem(icon: Icons.point_of_sale_outlined, activeIcon: Icons.point_of_sale,     label: 'Ventes',    path: '/sales'),
-    _NavItem(icon: Icons.bar_chart_outlined,     activeIcon: Icons.bar_chart,         label: 'Stats',     path: '/statistics'),
+    _NavItem(icon: Icons.home_outlined,          activeIcon: Icons.home,              label: 'Accueil',  path: '/home'),
+    _NavItem(icon: Icons.point_of_sale_outlined, activeIcon: Icons.point_of_sale,     label: 'Ventes',   path: '/sales'),
     _NavItem(icon: Icons.local_shipping_outlined,activeIcon: Icons.local_shipping,    label: 'Livraisons',path: '/deliveries'),
+    _NavItem(icon: Icons.bar_chart_outlined,     activeIcon: Icons.bar_chart,         label: 'Stats',    path: '/statistics'),
+    _NavItem(icon: Icons.chat_bubble_outline,    activeIcon: Icons.chat_bubble,       label: 'Messages', path: '/chat'),
   ];
 
   // ── Nav Client ───────────────────────────────────────────────────────────────
@@ -60,18 +60,19 @@ class MainShell extends ConsumerWidget {
         unselectedItemColor: AppColors.textSecondary,
         items: navItems.map((item) {
           final isChatItem = item.path == '/chat';
-          final showBadge  = isChatItem && unread > 0;
+          final badgeCount = isChatItem ? unread : 0;
+          final showBadge  = badgeCount > 0;
           return BottomNavigationBarItem(
             icon: showBadge
                 ? Badge(
-                    label: Text('$unread',
+                    label: Text('$badgeCount',
                         style: const TextStyle(fontSize: 10)),
                     child: Icon(item.icon),
                   )
                 : Icon(item.icon),
             activeIcon: showBadge
                 ? Badge(
-                    label: Text('$unread',
+                    label: Text('$badgeCount',
                         style: const TextStyle(fontSize: 10)),
                     child: Icon(item.activeIcon),
                   )
@@ -153,6 +154,7 @@ class _AdminHomePage extends ConsumerWidget {
     final statsAsync     = ref.watch(adminHomeStatsProvider);
     final recentAsync    = ref.watch(recentSalesProvider);
     final lowStockAsync  = ref.watch(lowStockProductsProvider);
+    final pendingCount   = ref.watch(pendingOrdersStreamProvider).valueOrNull ?? 0;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -166,7 +168,7 @@ class _AdminHomePage extends ConsumerWidget {
         child: CustomScrollView(
           slivers: [
             // ── AppBar ──────────────────────────────────────────────────────
-            _buildAdminAppBar(context, profile),
+            _buildAdminAppBar(context, profile, pendingCount),
 
             // ── Cartes stats ─────────────────────────────────────────────────
             SliverToBoxAdapter(
@@ -267,11 +269,12 @@ class _AdminHomePage extends ConsumerWidget {
     );
   }
 
-  SliverAppBar _buildAdminAppBar(BuildContext context, UserProfile profile) {
+  SliverAppBar _buildAdminAppBar(BuildContext context, UserProfile profile, int pendingCount) {
     return SliverAppBar(
       backgroundColor: AppColors.surface,
-      floating: true,
-      snap: true,
+      pinned: true,
+      floating: false,
+      snap: false,
       elevation: 0,
       titleSpacing: 0,
       title: Padding(
@@ -313,24 +316,24 @@ class _AdminHomePage extends ConsumerWidget {
         ),
       ),
       actions: [
-        Stack(
-          children: [
-            IconButton(
-              icon: const Icon(Icons.notifications_outlined, color: AppColors.textPrimary),
-              onPressed: () {},
-            ),
-            Positioned(
-              right: 8, top: 8,
-              child: Container(
-                width: 8, height: 8,
-                decoration: const BoxDecoration(
-                  color: AppColors.error,
-                  shape: BoxShape.circle,
+        pendingCount > 0
+            ? Badge(
+                label: Text(
+                  pendingCount > 9 ? '9+' : '$pendingCount',
+                  style: const TextStyle(fontSize: 10),
                 ),
+                child: IconButton(
+                  icon: const Icon(Icons.notifications_outlined,
+                      color: AppColors.textPrimary),
+                  onPressed: () => context.go('/deliveries'),
+                  tooltip: '$pendingCount commandes en attente',
+                ),
+              )
+            : IconButton(
+                icon: const Icon(Icons.notifications_outlined,
+                    color: AppColors.textPrimary),
+                onPressed: () => context.go('/deliveries'),
               ),
-            ),
-          ],
-        ),
         Padding(
           padding: const EdgeInsets.only(right: 12),
           child: GestureDetector(
@@ -556,14 +559,14 @@ class _AdminStatsGrid extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const _SectionTitle(title: "Aujourd'hui"),
+        const _SectionTitle(title: "Tableau de bord"),
         const SizedBox(height: 12),
         Row(
           children: [
             Expanded(
               flex: 2,
               child: _StatCard(
-                label: "Chiffre d'affaires",
+                label: 'CA ce mois',
                 value: _currencyFmt.format(stats.caAujourdhui),
                 icon: Icons.payments_outlined,
                 color: AppColors.primary,
@@ -573,10 +576,12 @@ class _AdminStatsGrid extends StatelessWidget {
             const SizedBox(width: 10),
             Expanded(
               child: _StatCard(
-                label: 'Ventes',
+                label: 'En attente',
                 value: '${stats.ventesAujourdhui}',
-                icon: Icons.receipt_outlined,
-                color: AppColors.secondary,
+                icon: Icons.hourglass_top_outlined,
+                color: stats.ventesAujourdhui > 0
+                    ? AppColors.warning
+                    : AppColors.success,
               ),
             ),
           ],
@@ -597,9 +602,9 @@ class _AdminStatsGrid extends StatelessWidget {
             const SizedBox(width: 10),
             Expanded(
               child: _StatCard(
-                label: 'Livraisons',
+                label: 'Ventes ce mois',
                 value: '${stats.livraisonsEnCours}',
-                icon: Icons.local_shipping_outlined,
+                icon: Icons.receipt_long_outlined,
                 color: const Color(0xFF1565C0),
               ),
             ),

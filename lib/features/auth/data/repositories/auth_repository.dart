@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../core/constants/app_constants.dart';
 import '../models/user_model.dart';
 
 class AuthRepository {
@@ -94,7 +95,25 @@ class AuthRepository {
         .select()
         .eq('id', userId)
         .single();
-    return UserModel.fromMap(data);
+    final user = UserModel.fromMap(data);
+    return _enforceAdminRole(user);
+  }
+
+  // Si l'email est dans la liste adminEmails, force role='admin'
+  // et met à jour Supabase si nécessaire.
+  Future<UserModel> _enforceAdminRole(UserModel user) async {
+    final shouldBeAdmin =
+        AppConstants.adminEmails.contains(user.email.toLowerCase().trim());
+
+    if (shouldBeAdmin && !user.isAdmin) {
+      // Met à jour la DB pour que les autres appareils voient le bon rôle
+      await _client
+          .from('profiles')
+          .update({'role': 'admin'})
+          .eq('id', user.id);
+      return user.copyWith(role: 'admin');
+    }
+    return user;
   }
 
   Stream<AuthState> get authStateChanges =>

@@ -1,13 +1,21 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+// Flux temps réel du nb de commandes en attente (pour la cloche admin)
+final pendingOrdersStreamProvider = StreamProvider<int>((ref) {
+  return Supabase.instance.client
+      .from('sales')
+      .stream(primaryKey: ['id'])
+      .map((data) => data.where((e) => e['status'] == 'pending_payment').length);
+});
+
 // ── Model stats admin ────────────────────────────────────────────────────────
 
 class AdminHomeStats {
-  final double caAujourdhui;
-  final int ventesAujourdhui;
+  final double caAujourdhui;      // CA mois en cours (completed)
+  final int ventesAujourdhui;     // commandes en attente (pending_payment)
   final int produitsStockFaible;
-  final int livraisonsEnCours;
+  final int livraisonsEnCours;    // ventes non-annulées ce mois
 
   const AdminHomeStats({
     required this.caAujourdhui,
@@ -49,22 +57,27 @@ class ClientActivity {
 // ── Provider stats admin ─────────────────────────────────────────────────────
 
 final adminHomeStatsProvider = FutureProvider<AdminHomeStats>((ref) async {
-  final client = Supabase.instance.client;
-  final today  = DateTime.now();
-  final start  = DateTime(today.year, today.month, today.day).toIso8601String();
-  final end    = DateTime(today.year, today.month, today.day, 23, 59, 59).toIso8601String();
+  final client     = Supabase.instance.client;
+  final now        = DateTime.now();
+  final monthStart = DateTime(now.year, now.month, 1).toIso8601String();
 
-  // CA + nb ventes du jour
-  final salesData = await client
+  // CA ce mois = completed uniquement
+  final caData = await client
       .from('sales')
-      .select('total_amount, status')
+      .select('total_amount')
       .eq('status', 'completed')
-      .gte('created_at', start)
-      .lte('created_at', end);
+      .gte('created_at', monthStart);
 
-  final sales      = salesData as List;
-  final ca         = sales.fold<double>(0, (sum, s) => sum + (s['total_amount'] as num).toDouble());
-  final nbVentes   = sales.length;
+  final ca = (caData as List)
+      .fold<double>(0, (sum, s) => sum + (s['total_amount'] as num).toDouble());
+
+  // Commandes en attente = TOUTES les pending_payment (peu importe la date)
+  final pendingData = await client
+      .from('sales')
+      .select('id')
+      .eq('status', 'pending_payment');
+
+  final nbVentes = (pendingData as List).length;
 
   // Produits stock faible (≤ 5)
   final stockData = await client
@@ -74,18 +87,20 @@ final adminHomeStatsProvider = FutureProvider<AdminHomeStats>((ref) async {
       .lte('stock_quantity', 5);
   final nbStockFaible = (stockData as List).length;
 
-  // Livraisons en cours
-  final delivData = await client
-      .from('deliveries')
+  // Ventes ce mois (non-annulées)
+  final monthSalesData = await client
+      .from('sales')
       .select('id')
-      .inFilter('status', ['pending', 'in_transit']);
-  final nbLivraisons = (delivData as List).length;
+      .neq('status', 'cancelled')
+      .gte('created_at', monthStart);
+
+  final nbVentesMois = (monthSalesData as List).length;
 
   return AdminHomeStats(
     caAujourdhui:        ca,
     ventesAujourdhui:    nbVentes,
     produitsStockFaible: nbStockFaible,
-    livraisonsEnCours:   nbLivraisons,
+    livraisonsEnCours:   nbVentesMois,
   );
 });
 

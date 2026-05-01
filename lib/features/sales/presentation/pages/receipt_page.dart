@@ -6,6 +6,9 @@ import 'package:printing/printing.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import '../../../../core/theme/app_theme.dart';
+import '../../../auth/providers/auth_provider.dart';
+import '../../../deliveries/presentation/pages/deliveries_page.dart';
+import '../../../home/providers/home_stats_provider.dart';
 import '../../providers/sale_provider.dart';
 import '../../data/models/sale_model.dart';
 
@@ -173,17 +176,47 @@ class ReceiptPage extends ConsumerWidget {
 
 // ── Corps du reçu ─────────────────────────────────────────────────────────────
 
-class _ReceiptBody extends StatelessWidget {
+class _ReceiptBody extends ConsumerStatefulWidget {
   final SaleModel sale;
   const _ReceiptBody({required this.sale});
 
   @override
+  ConsumerState<_ReceiptBody> createState() => _ReceiptBodyState();
+}
+
+class _ReceiptBodyState extends ConsumerState<_ReceiptBody> {
+  bool _validating = false;
+
+  Future<void> _validate() async {
+    setState(() => _validating = true);
+    await ref.read(saleCreationProvider.notifier).confirmPayment(
+          saleId: widget.sale.id,
+        );
+    if (mounted) {
+      ref.invalidate(saleDetailProvider(widget.sale.id));
+      ref.invalidate(salesListProvider);
+      ref.invalidate(adminHomeStatsProvider);
+      ref.invalidate(recentSalesProvider);
+      ref.invalidate(deliveriesOrdersProvider);
+      setState(() => _validating = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Vente validée avec succès !'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final sale = widget.sale;
+    final isAdmin = ref.watch(authProvider).isAdmin;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          // ── Status banner ───────────────────────────────────────────────
+          // ── Banner : annulé ────────────────────────────────────────────
           if (sale.isCancelled)
             Container(
               width: double.infinity,
@@ -207,6 +240,37 @@ class _ReceiptBody extends StatelessWidget {
                         fontFamily: 'Poppins',
                         fontSize: 12,
                         color: AppColors.error,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+          // ── Banner : en attente de paiement ────────────────────────────
+          if (sale.isPendingPayment)
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.warning.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                    color: AppColors.warning.withValues(alpha: 0.4)),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.hourglass_top_outlined,
+                      color: AppColors.warning, size: 18),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'En attente de validation — paiement non encore encaissé',
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 12,
+                        color: AppColors.warning,
                       ),
                     ),
                   ),
@@ -435,6 +499,41 @@ class _ReceiptBody extends StatelessWidget {
           ),
 
           const SizedBox(height: 20),
+
+          // ── Bouton validation admin ─────────────────────────────────────
+          if (isAdmin && sale.isPendingPayment)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: _validating ? null : _validate,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.success,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14)),
+                  ),
+                  icon: _validating
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Icon(Icons.check_circle_outline),
+                  label: Text(
+                    _validating ? 'Validation...' : 'Valider le paiement',
+                    style: const TextStyle(
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
+                    ),
+                  ),
+                ),
+              ),
+            ),
 
           // ── Bouton retour ───────────────────────────────────────────────
           SizedBox(

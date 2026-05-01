@@ -11,7 +11,7 @@ final adminIdProvider = FutureProvider<String?>((ref) {
 });
 
 final conversationProvider =
-    StreamProvider.family<List<MessageModel>, String>((ref, otherUserId) {
+    StreamProvider.autoDispose.family<List<MessageModel>, String>((ref, otherUserId) {
   return ref.read(chatRepositoryProvider).conversationStream(otherUserId);
 });
 

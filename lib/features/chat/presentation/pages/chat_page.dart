@@ -269,9 +269,10 @@ class _ConversationViewState extends ConsumerState<_ConversationView> {
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollCtrl.hasClients) {
+        // Avec reverse:true, position 0 = bas de l'écran (messages récents)
         _scrollCtrl.animateTo(
-          _scrollCtrl.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
+          0,
+          duration: const Duration(milliseconds: 250),
           curve: Curves.easeOut,
         );
       }
@@ -303,8 +304,7 @@ class _ConversationViewState extends ConsumerState<_ConversationView> {
 
   @override
   Widget build(BuildContext context) {
-    final currentUserId =
-        ref.read(currentProfileProvider).valueOrNull?.id ?? '';
+    final currentUserId = ref.watch(currentUserProvider)?.id ?? '';
     final messagesAsync =
         ref.watch(conversationProvider(widget.otherUserId));
 
@@ -379,22 +379,27 @@ class _ConversationViewState extends ConsumerState<_ConversationView> {
                     ),
                   );
                 }
-                // Hors du build : marquer comme lu + scroller
+                // Marquer comme lu (hors du build)
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   ChatRepository().markAsRead(widget.otherUserId);
-                  _scrollToBottom();
                 });
 
+                // reverse:true → index 0 (le plus récent) s'affiche en bas.
+                // Le séparateur de date doit apparaître au-dessus du PREMIER
+                // message de chaque jour (= dernier index du groupe en ordre décroissant).
                 return ListView.builder(
                   controller: _scrollCtrl,
-                  padding: const EdgeInsets.fromLTRB(12, 16, 12, 8),
+                  reverse: true,
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
                   itemCount: messages.length,
                   itemBuilder: (_, i) {
-                    final msg     = messages[i];
-                    final isMine  = msg.senderId == currentUserId;
-                    final showDate = i == 0 ||
+                    final msg    = messages[i];
+                    final isMine = msg.senderId == currentUserId;
+                    // Affiche le séparateur quand le message SUIVANT (plus ancien)
+                    // est d'un jour différent, ou quand c'est le dernier item (le plus ancien).
+                    final showDate = i == messages.length - 1 ||
                         messages[i].createdAt.day !=
-                            messages[i - 1].createdAt.day;
+                            messages[i + 1].createdAt.day;
                     return Column(
                       children: [
                         if (showDate)

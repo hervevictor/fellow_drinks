@@ -51,11 +51,11 @@ final _statsProvider = FutureProvider<_StatsData>((ref) async {
   final now    = DateTime.now();
   final monthStart = DateTime(now.year, now.month, 1).toIso8601String();
 
-  // All completed sales
+  // All non-cancelled sales (pending_payment + completed)
   final allSales = await client
       .from('sales')
-      .select('total_amount, created_at, payment_method')
-      .eq('status', 'completed');
+      .select('total_amount, created_at, payment_method, status')
+      .neq('status', 'cancelled');
 
   final sales = (allSales as List).cast<Map<String, dynamic>>();
 
@@ -119,9 +119,9 @@ final _statsProvider = FutureProvider<_StatsData>((ref) async {
       .toList()
     ..sort((a, b) => b.revenue.compareTo(a.revenue));
 
-  // Revenue by payment method
+  // Revenue by payment method (completed only — pending hasn't paid yet)
   final Map<String, double> byPayment = {};
-  for (final s in sales) {
+  for (final s in sales.where((s) => s['status'] == 'completed')) {
     final method = (s['payment_method'] as String?) ?? 'cash';
     byPayment[method] =
         (byPayment[method] ?? 0) + (s['total_amount'] as num).toDouble();
